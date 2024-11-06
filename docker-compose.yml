@@ -1,0 +1,48 @@
+services:
+  ticketsystem.api:
+    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    container_name: ticketsystem.api
+    build:
+      context: .
+      dockerfile: TicketSystem.Api/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+    networks:
+      - ticketsystem-network
+
+  ticketsystem.ui:
+    image: node:alpine 
+    container_name: ticketsystem.ui
+    working_dir: /app
+    build:
+      context: ./TicketSystem.Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" 
+    volumes:
+      - ./TicketSystem.Frontend:/app  
+      - /app/node_modules 
+    command: npm run dev
+    networks:
+      - ticketsystem-network
+
+  nginx:
+    image: nginx:latest
+    container_name: ticketsystem.nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ticketsystem.api
+      - ticketsystem.ui
+    networks:
+      - ticketsystem-network
+      
+networks:
+  ticketsystem-network:
+    driver: bridge
+
